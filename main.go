@@ -48,6 +48,8 @@ func initialModel() model {
 	}
 }
 
+// TODO: Do I block here? If not, how do I let BubbleTea know that
+// we've received a response and to rerender the viewport?
 func (m *model) TestCallback(response string) tea.Cmd {
 	m.viewport.SetContent(response)
 	return nil
@@ -76,6 +78,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.prompt = m.textarea.Value()
 			m.response = m.prompt
 			// m.viewport.SetContent(m.response)
+			// TODO: Definitely do not want to block update,
+			// so what is the best way to fire off a process,
+			// maybe show some loading spinner thingy and
+			// let bubbletea know when we've finished?
+			// My instinct says to use the tea.Cmd system.
+			// Need to confirm.
 			callback = m.TestCallback(m.response)
 
 			m.textarea.Reset()
