@@ -56,6 +56,18 @@ func initialModel(apiKey string) model {
 	}
 }
 
+func queryChatGPT(client *client.Client, query string) tea.Cmd {
+	return func() tea.Msg {
+		res, err := client.Query(query)
+		if err != nil {
+			log.Printf("Receieved error response: %s", err)
+			return nil
+		}
+
+		return apiReponseMsg(res)
+	}
+}
+
 func (m *model) TestMessage() tea.Msg {
 	res, err := m.client.Query(m.prompt)
 	if err != nil {
@@ -63,28 +75,7 @@ func (m *model) TestMessage() tea.Msg {
 		return nil
 	}
 
-	// answer := wordwrap.String(res, 100)
-	// m.viewport.SetContent(answer)
-
-	// m.response = res
-
 	return apiReponseMsg(res)
-}
-
-// TODO: Do I block here? If not, how do I let BubbleTea know that
-// we've received a response and to rerender the viewport?
-func (m *model) TestCallback(query string) tea.Msg {
-	// m.viewport.SetContent(response)
-	res, err := m.client.Query(query)
-	if err != nil {
-		log.Printf("Receieved error response: %s", err)
-		return nil
-	}
-
-	answer := wordwrap.String(res, 100)
-	m.viewport.SetContent(answer)
-
-	return nil
 }
 
 func (m model) Init() tea.Cmd {
@@ -107,21 +98,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			m.prompt = m.textarea.Value()
-			// m.response = m.prompt
-			// m.viewport.SetContent(m.response)
-			// TODO: Definitely do not want to block update,
-			// so what is the best way to fire off a process,
-			// maybe show some loading spinner thingy and
-			// let bubbletea know when we've finished?
-			// My instinct says to use the tea.Cmd system.
-			// Need to confirm.
-			callback = m.TestMessage
+			// m.prompt = m.textarea.Value()
 
+			// Set the callback Cmd to our callback
+			// which will return an apiReponseMsg.
+			callback = queryChatGPT(m.client, m.textarea.Value())
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
 		}
 
+		// Our callback returns an apiReponseMsg
+		// which we check for an update the viewport accordingly.
 	case apiReponseMsg:
 		answer := wordwrap.String(string(msg), 100)
 		m.viewport.SetContent(answer)
@@ -133,6 +120,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// Return the model and a batch of Cmds
 	return m, tea.Batch(tiCmd, vpCmd, callback)
 }
 
