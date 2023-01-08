@@ -14,7 +14,8 @@ import (
 )
 
 type (
-	errMsg error
+	errMsg        error
+	apiReponseMsg string
 )
 
 type model struct {
@@ -55,9 +56,24 @@ func initialModel(apiKey string) model {
 	}
 }
 
+func (m *model) TestMessage() tea.Msg {
+	res, err := m.client.Query(m.prompt)
+	if err != nil {
+		log.Printf("Receieved error response: %s", err)
+		return nil
+	}
+
+	// answer := wordwrap.String(res, 100)
+	// m.viewport.SetContent(answer)
+
+	// m.response = res
+
+	return apiReponseMsg(res)
+}
+
 // TODO: Do I block here? If not, how do I let BubbleTea know that
 // we've received a response and to rerender the viewport?
-func (m *model) TestCallback(query string) tea.Cmd {
+func (m *model) TestCallback(query string) tea.Msg {
 	// m.viewport.SetContent(response)
 	res, err := m.client.Query(query)
 	if err != nil {
@@ -92,7 +108,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case tea.KeyEnter:
 			m.prompt = m.textarea.Value()
-			m.response = m.prompt
+			// m.response = m.prompt
 			// m.viewport.SetContent(m.response)
 			// TODO: Definitely do not want to block update,
 			// so what is the best way to fire off a process,
@@ -100,11 +116,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// let bubbletea know when we've finished?
 			// My instinct says to use the tea.Cmd system.
 			// Need to confirm.
-			callback = m.TestCallback(m.response)
+			callback = m.TestMessage
 
 			m.textarea.Reset()
 			m.viewport.GotoBottom()
 		}
+
+	case apiReponseMsg:
+		answer := wordwrap.String(string(msg), 100)
+		m.viewport.SetContent(answer)
+		// callback = nil
+		m.viewport.GotoBottom()
 
 	case errMsg:
 		m.err = msg
