@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/reflow/wordwrap"
+
+	"github.com/afsharalex/chatgpterm/client"
 )
 
 type (
@@ -19,25 +23,27 @@ type model struct {
 	prompt   string
 	response string
 	err      error
+	client   *client.Client
 }
 
-func initialModel() model {
+func initialModel(apiKey string) model {
 	ta := textarea.New()
 	ta.Placeholder = "Ask a question..."
 	ta.Focus()
 
 	ta.Prompt = "| "
-	ta.CharLimit = 300
+	ta.CharLimit = 100
 
-	ta.SetWidth(300)
+	ta.SetWidth(100)
 	ta.SetHeight(3)
 
 	ta.ShowLineNumbers = false
 
-	vp := viewport.New(300, 5)
+	vp := viewport.New(100, 15)
 	vp.SetContent("Welcome to ChatGPTerm! Type a question and press Enter to send.")
 
 	ta.KeyMap.InsertNewline.SetEnabled(false)
+	client := client.NewClient(apiKey)
 
 	return model{
 		textarea: ta,
@@ -45,13 +51,23 @@ func initialModel() model {
 		prompt:   "",
 		response: "",
 		err:      nil,
+		client:   client,
 	}
 }
 
 // TODO: Do I block here? If not, how do I let BubbleTea know that
 // we've received a response and to rerender the viewport?
-func (m *model) TestCallback(response string) tea.Cmd {
-	m.viewport.SetContent(response)
+func (m *model) TestCallback(query string) tea.Cmd {
+	// m.viewport.SetContent(response)
+	res, err := m.client.Query(query)
+	if err != nil {
+		log.Printf("Receieved error response: %s", err)
+		return nil
+	}
+
+	answer := wordwrap.String(res, 100)
+	m.viewport.SetContent(answer)
+
 	return nil
 }
 
@@ -107,7 +123,11 @@ func (m model) View() string {
 }
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	apiKey := os.Getenv("CHAT_GPT_API_KEY")
+	if apiKey == "" {
+		log.Fatal("CHAT_GPT_API_KEY is not set in Environment.")
+	}
+	p := tea.NewProgram(initialModel(apiKey))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error creating app.")
 		os.Exit(1)
