@@ -2,6 +2,8 @@
 
 Simple TUI for interacting with ChatGPT. 
 
+**STATUS**: Very early, still working on it.
+
 ## Demo
 
 ![Demo Gif of ChatGPTerm](./docs/demo.gif)
