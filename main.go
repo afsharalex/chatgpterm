@@ -32,7 +32,7 @@ func initialModel(apiKey string) model {
 	ta.Placeholder = "Ask a question..."
 	ta.Focus()
 
-	ta.Prompt = "| "
+	ta.Prompt = "┃ "
 	ta.CharLimit = 100
 
 	ta.SetWidth(100)
@@ -129,7 +129,7 @@ func (m model) View() string {
 		"%s\n\n%s",
 		m.viewport.View(),
 		m.textarea.View(),
-	) + "\n\n"
+	) + "\n\n\tPress Ctrl+c or Esc to exit"
 }
 
 func main() {
@@ -138,16 +138,17 @@ func main() {
 		log.Fatal("CHAT_GPT_API_KEY is not set in Environment.")
 	}
 
-// 	client := client.NewClient(apiKey)
+	// 	client := client.NewClient(apiKey)
 
-// 	res, err := client.Query("What is Rust?")
-// 	if err != nil {
-// 		log.Fatalf("Received err: %+v", err)
-// 	}
+	// 	res, err := client.Query("What is Rust?")
+	// 	if err != nil {
+	// 		log.Fatalf("Received err: %+v", err)
+	// 	}
 
-// 	fmt.Printf("Response: %s", res)
+	// 	fmt.Printf("Response: %s", res)
 
-	p := tea.NewProgram(initialModel(apiKey))
+	// TODO: Allow user to pass a flag for non-fullscreen mode.
+	p := tea.NewProgram(initialModel(apiKey), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error creating app.")
 		os.Exit(1)
