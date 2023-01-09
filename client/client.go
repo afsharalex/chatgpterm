@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -35,7 +36,7 @@ type ApiError struct {
 	Message string `json:"message"`
 	Type    string `json:"type"`
 	Param   string `json:"param"`
-	Code    int    `json:"code"`
+	Code    string `json:"code"`
 }
 
 type ApiResponse struct {
@@ -74,11 +75,13 @@ func (c Client) Query(question string) (string, error) {
 
 	jsonBody, err := json.Marshal(apiRequest)
 	if err != nil {
+		log.Printf("Received error: %s", err)
 		return "", err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, "https://api.openai.com/v1/completions", bytes.NewBuffer(jsonBody))
 	if err != nil {
+		log.Printf("Received error: %s", err)
 		return "", err
 	}
 
@@ -89,6 +92,7 @@ func (c Client) Query(question string) (string, error) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Printf("Received error: %s", err)
 		return "", err
 	}
 
@@ -100,8 +104,16 @@ func (c Client) parseResponse(res *http.Response) (string, error) {
 	err := json.NewDecoder(res.Body).Decode(apiResponse)
 	defer res.Body.Close()
 	if err != nil {
+		log.Printf("Received error: %+v", err)
 		return "", err
 	}
+
+	// TODO: Handle errors and display them to user. I think this should
+	// be some kind of popup, or a fatal log since the user may need to
+	// change something with their account...
+
+	// fmt.Printf("API Response: %+v", res)
+	// fmt.Printf("API Response Decoded: %+v", apiResponse)
 
 	if len(apiResponse.Choices) > 0 {
 		return apiResponse.Choices[0].Text, nil

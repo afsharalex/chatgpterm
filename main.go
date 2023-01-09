@@ -61,7 +61,7 @@ func queryChatGPT(client *client.Client, query string) tea.Cmd {
 		res, err := client.Query(query)
 		if err != nil {
 			log.Printf("Receieved error response: %s", err)
-			return nil
+			return apiReponseMsg(err.Error())
 		}
 
 		return apiReponseMsg(res)
@@ -137,6 +137,16 @@ func main() {
 	if apiKey == "" {
 		log.Fatal("CHAT_GPT_API_KEY is not set in Environment.")
 	}
+
+// 	client := client.NewClient(apiKey)
+
+// 	res, err := client.Query("What is Rust?")
+// 	if err != nil {
+// 		log.Fatalf("Received err: %+v", err)
+// 	}
+
+// 	fmt.Printf("Response: %s", res)
+
 	p := tea.NewProgram(initialModel(apiKey))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Error creating app.")
