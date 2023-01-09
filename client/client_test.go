@@ -6,7 +6,7 @@ func TestClientDefaults(t *testing.T) {
 	expectedModel := "text-davinci-003"
 	expectedTemperature := 0
 	expectedMaxTokens := 300
-	c := NewClient()
+	c := NewClient("1234")
 
 	if c.Model != expectedModel {
 		t.Errorf("expected model %q, got %q", expectedModel, c.Model)
